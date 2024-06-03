@@ -14,6 +14,10 @@ import instructor
 import openai
 
 from multion.client import MultiOn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 multion = MultiOn(api_key=os.environ.get("MULTION_API_KEY"))
 
@@ -25,6 +29,7 @@ print(device)
 model_id = "vikhyatk/moondream2"
 revision = "2024-05-20"
 model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, revision=revision).to(device)
+model = torch.compile(model)
 tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
 
 client = instructor.from_openai(AsyncOpenAI(

@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir --upgrade -r /requirements.txt
 EXPOSE 7860
 
 # Start the FastAPI app on port 7860
-CMD ["fastapi", "run", "app.py", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "7860"]

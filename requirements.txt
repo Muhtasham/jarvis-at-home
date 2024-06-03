@@ -1,8 +1,10 @@
 fastapi
 openai
-transformers 
+transformers
+torchvision
 einops
 multion
 gradio
 instructor
 requests
+python-dotenv
