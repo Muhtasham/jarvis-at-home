@@ -4,6 +4,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from PIL import Image
 from openai import AsyncOpenAI
 from pydantic import BaseModel
+from rich import print
 
 import io
 import os
@@ -19,6 +20,8 @@ multion = MultiOn(api_key=os.environ.get("MULTION_API_KEY"))
 app = FastAPI()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+print(device)
+
 model_id = "vikhyatk/moondream2"
 revision = "2024-05-20"
 model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, revision=revision).to(device)
@@ -42,21 +45,19 @@ class MultiOnInputBrowse(BaseModel):
     url: str
     local: bool = True
 
-class MultiOnInputSession(BaseModel):
+async def process_image_file(file: UploadFile) -> str:
     """
-    A model for handling session-based browsing actions.
+    Process an uploaded image file and generate a description using the model.
 
-    Attributes:
-        cmd (str): The command to execute. Example: "Please post 'Hi from MultiOn Agent API. '".
-        url (str): The URL for the session. Example: "https://twitter.com".
-        local (bool): Flag indicating whether the session should be local. Default is True.
+    Args:
+        file (UploadFile): The uploaded image file.
+
+    Raises:
+        HTTPException: If the file type is not JPEG or PNG, or if there is an error processing the image.
+
+    Returns:
+        str: The description of the image.
     """
-    cmd: str
-    url: str 
-    local: bool = True
-
-@app.post("/process-image/")
-async def process_image(file: UploadFile = File(...)):
     if file.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are supported.")
     
@@ -66,7 +67,7 @@ async def process_image(file: UploadFile = File(...)):
     try:
         enc_image = model.encode_image(image)
         description = model.answer_question(enc_image, "Describe this image.", tokenizer)
-        return {"description": description}
+        return description
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -74,13 +75,12 @@ async def process_image(file: UploadFile = File(...)):
 async def process_input(text: str = Form(...), file: UploadFile = File(None)):
     if file is not None:
         try:
-            image_response = await process_image(file)
-            image_description = image_response["description"]
+            image_description = await process_image_file(file)
         except HTTPException as e:
             raise e
     else:
         image_description = None
-
+    
     # Process the text and optionally include the image description
     # Example: Concatenate text and image description
     if image_description:
@@ -88,17 +88,18 @@ async def process_input(text: str = Form(...), file: UploadFile = File(None)):
     else:
         processed_text = text
     
-    response = await generate_command(processed_text)
+    command = await generate_command(processed_text)
+    print(command.message)
 
     try:
-        multion.browse(
-            cmd=response.cmd,
-            url=response.url,
-            local=response.local
+        response = multion.browse(
+            cmd=command.cmd,
+            url=command.url,
+            local=command.local
         )
 
         print(response.message)
-        return JSONResponse(content=response.message)
+        return JSONResponse(content={"response": response.message, "command": command.model_dump()})
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Mution API error: {str(e)}")

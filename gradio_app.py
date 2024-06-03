@@ -1,6 +1,6 @@
+from rich import print
 import gradio as gr
 import requests
-
 
 def echo(message, history):
     file_paths = message.get("files", [])
@@ -15,7 +15,9 @@ def echo(message, history):
 
     # Handle the response from the FastAPI endpoint
     if response.status_code == 200:
-        return response.json()
+        response_json = response.json()
+        print(response_json)
+        return response_json.get("response")
     else:
         return {"error": "Failed to process input"}
 
