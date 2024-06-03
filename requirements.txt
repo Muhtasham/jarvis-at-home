@@ -1,0 +1,8 @@
+fastapi
+openai
+transformers 
+einops
+multion
+gradio
+instructor
+requests
