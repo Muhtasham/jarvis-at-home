@@ -45,7 +45,7 @@ class MultiOnInputBrowse(BaseModel):
     A model for handling user commands that involve browsing actions.
 
     Attributes:
-        cmd (str): The command to execute. Example: "post 'hello world - I love multion' on twitter".
+        cmd (str): The command to execute should as detailed as possible. Example: "post 'hello world - I love multion' on twitter".
         url (str): The URL where the action should be performed. Example: "https://twitter.com".
         local (bool): Flag indicating whether the action should be performed locally. Default is False.
     """
@@ -89,6 +89,17 @@ def read_root():
 
 @app.post("/process-input/")
 async def process_input(text: str = Form(...), file: UploadFile = File(None), online: bool = Form(False)):
+    """
+    Process the input text and optionally an image file, then generate a command based on the input.
+    
+    Args:
+        text (str): The input text from the user.
+        file (UploadFile, optional): An optional image file to be processed.
+        online (bool, optional): A flag indicating if the command should be processed online. Default is False.
+    
+    Returns:
+        JSONResponse: A JSON response containing either a local browsing command or the response from the MultiOn API.
+    """
     if file is not None:
         try:
             print("Processing image file")
@@ -128,6 +139,18 @@ async def process_input(text: str = Form(...), file: UploadFile = File(None), on
         return JSONResponse(content={"response": "This command is for local browsing", "command": command.model_dump()})
 
 async def generate_command(content: str) -> MultiOnInputBrowse:
+    """
+    Generate a command based on the provided content using the OpenAI API.
+
+    Args:
+        content (str): The input content based on which the command is generated.
+
+    Returns:
+        MultiOnInputBrowse: The generated command with the details.
+    
+    Raises:
+        HTTPException: If there is an error with the OpenAI API call.
+    """
     try:
         response = await client.chat.completions.create(
             model="gpt-4o",
