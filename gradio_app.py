@@ -74,11 +74,11 @@ def echo(message, history):
 
     try:
         # Send the POST request to the FastAPI endpoint
-        response = post_with_retry("https://muhtasham-agent.hf.space/process-input/", data=data, files=files)
+        fast_api_response = post_with_retry("https://muhtasham-agent.hf.space/process-input/", data=data, files=files)
 
         # Handle the response from the FastAPI endpoint
-        if response.status_code == 200:
-            response_json = response.json()
+        if fast_api_response.status_code == 200:
+            response_json = fast_api_response.json()
             logger.info(response_json)
             if "response" in response_json:
                 if response_json["response"] == "This command is for local browsing":
@@ -93,7 +93,8 @@ def echo(message, history):
                         session_id = response.session_id
                         logger.info(f"Session created: {session_id}")
 
-                        logger.info(response.message)
+                        logger.info(f"Response message so far: {response.message}")
+                        logger.info(f"Status so far: {response.status}")
 
                         logger.info("Stepping through the session")
                         while response.status == 'CONTINUE':
@@ -102,9 +103,10 @@ def echo(message, history):
                                 cmd=command["cmd"],
                                 url=command["url"],
                             )
-                            user_facing_response = response.message
-                            logger.info(user_facing_response)
                         
+                        logger.info(f"Status after exiting the loop: {response.status}")
+                        user_facing_response = response.message
+                        logger.info(f"User facing response: {user_facing_response}")
                         logger.info("Closing the session")
                         response = multion.sessions.close(session_id=session_id)
                         logger.info("Close_session_response: ", response)
