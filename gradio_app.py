@@ -55,12 +55,28 @@ def echo(message, history):
                     # Make the secondary call based on the received command
                     command = response_json["command"]
                     try:
-                        secondary_response = multion.browse(
-                            cmd=command["cmd"],
-                            url=command["url"],
-                            local=True
+                        response = multion.sessions.create(
+                        url=command["url"],
+                        local=True
                         )
-                        return secondary_response.message
+                        session_id = response.session_id
+                        print(response.message)
+
+                        while response.status == 'CONTINUE':
+                            response = multion.sessions.step(
+                                session_id = session_id,
+                                cmd=command["cmd"],
+                                url=command["url"],
+                            )
+                            user_facing_response = response.message
+                            print(user_facing_response)
+                            
+
+                        response = multion.sessions.close(session_id=session_id)
+                        print("close_session_response: ", response)
+
+                        return user_facing_response
+                    
                     except Exception as e:
                         print(f"Error in secondary call: {e}")
                         return {"error": str(e)}
