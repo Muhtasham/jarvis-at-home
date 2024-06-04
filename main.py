@@ -4,15 +4,13 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from PIL import Image
 from openai import AsyncOpenAI
 from pydantic import BaseModel
-from fastapi.logger import logger
+from rich import print
 
 import io
 import os
 import multion
 import torch
 import instructor
-import openai
-
 from multion.client import MultiOn
 from dotenv import load_dotenv
 
@@ -20,26 +18,27 @@ from dotenv import load_dotenv
 load_dotenv()
 
 multion = MultiOn(api_key=os.environ.get("MULTION_API_KEY"))
-logger.info("MultiOn API key loaded")
+print("MultiOn API key loaded")
 
 app = FastAPI()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-logger.info(f"Device: {device}")
+print(f"Device: {device}")
 
 model_id = "vikhyatk/moondream2"
 revision = "2024-05-20"
 model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, revision=revision).to(device)
-logger.info(f"Model loaded: {model_id} to {device}")
+print(f"Model loaded: {model_id} to {device}")
 model = torch.compile(model)
-logger.info(f"Model compiled: {model_id} to {device}")
+print(f"Model compiled: {model_id} to {device}")
 tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
-logger.info(f"Tokenizer loaded: {model_id}")
+print(f"Tokenizer loaded: {model_id}")
 
 client = instructor.from_openai(AsyncOpenAI(
     # This is the default and can be omitted
     api_key=os.environ.get("OPENAI_API_KEY"),
 ))
+print("OpenAI API key loaded and client initialized")
 
 class MultiOnInputBrowse(BaseModel):
     """
@@ -48,11 +47,11 @@ class MultiOnInputBrowse(BaseModel):
     Attributes:
         cmd (str): The command to execute. Example: "post 'hello world - I love multion' on twitter".
         url (str): The URL where the action should be performed. Example: "https://twitter.com".
-        local (bool): Flag indicating whether the action should be performed locally. Default is True.
+        local (bool): Flag indicating whether the action should be performed locally. Default is False.
     """
     cmd: str
     url: str
-    local: bool = True
+    local: bool = False
 
 async def process_image_file(file: UploadFile) -> str:
     """
@@ -70,23 +69,32 @@ async def process_image_file(file: UploadFile) -> str:
     if file.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are supported.")
     
+    print("Reading image file")
     image_data = await file.read()
     image = Image.open(io.BytesIO(image_data))
+    print("Image loaded")
 
     try:
+        print("Encoding image")
         enc_image = model.encode_image(image)
         description = model.answer_question(enc_image, "Describe this image.", tokenizer)
+        print("Image description generated")
         return description
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
 @app.post("/process-input/")
-async def process_input(text: str = Form(...), file: UploadFile = File(None)):
+async def process_input(text: str = Form(...), file: UploadFile = File(None), online: bool = Form(False)):
     if file is not None:
         try:
-            logger.info("Processing image file")
+            print("Processing image file")
+            print(f"File type: type(file) = {type(file)}, Filename: {file.filename}, Content type: {file.content_type}")
             image_description = await process_image_file(file)
-            logger.info(f"Image description: {image_description}")
+            print(f"Image description: {image_description}")
         except HTTPException as e:
             raise e
     else:
@@ -99,27 +107,29 @@ async def process_input(text: str = Form(...), file: UploadFile = File(None)):
     else:
         processed_text = text
     
-    logger.info(f"Processed text: {processed_text}")
+    print(f"Processed text: {processed_text}")
     command = await generate_command(processed_text)
-    logger.info(f"Command generated: {command.message}")
+    print(f"Command generated: {command}")
 
-    try:
-        logger.info("Calling MultiOn API")
-        response = multion.browse(
-            cmd=command.cmd,
-            url=command.url,
-            local=command.local
-        )
-        logger.info(f"Response received: {response.message}")
-        return JSONResponse(content={"response": response.message, "command": command.model_dump()})
+    if not online and not command.local:
+        try:
+            print("Calling MultiOn API with online=True")
+            response = multion.browse(
+                cmd=command.cmd,
+                url=command.url,
+                local=command.local
+            )
+            print(f"Response received: {response.message}")
+            return JSONResponse(content={"response": response.message, "command": command.model_dump()})
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Mution API error: {str(e)}")
-
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Mution API error: {str(e)}")
+    else:
+        return JSONResponse(content={"response": "This command is for local browsing", "command": command.model_dump()})
 
 async def generate_command(content: str) -> MultiOnInputBrowse:
     try:
-        response = await openai.ChatCompletion.create(
+        response = await client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
