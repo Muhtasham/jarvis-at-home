@@ -1,6 +1,18 @@
-from rich import print
+import multion
 import gradio as gr
 import requests
+import os 
+
+from rich import print
+from multion.client import MultiOn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+multion = MultiOn(api_key=os.environ.get("MULTION_API_KEY"))
+print("MultiOn API key loaded")
+
 
 def echo(message, history):
     file_paths = message.get("files", [])
@@ -10,8 +22,25 @@ def echo(message, history):
     print(f"Received files: {file_paths}")
     
     # Prepare the data for the POST request
-    data = {'text': text}
-    files = {'file': (file_paths[0], open(file_paths[0], 'rb'))} if file_paths else None
+    data = {'text': text, 'online': 'true'}  # Ensure 'online' is sent as a string
+    files = None
+    
+    if file_paths:
+        # Determine the MIME type based on file extension
+        mime_type = 'application/octet-stream'  # Default to a generic binary type
+        ext = os.path.splitext(file_paths[0])[1].lower()
+        if ext == '.png':
+            mime_type = 'image/png'
+        elif ext == '.jpeg' or ext == '.jpg':
+            mime_type = 'image/jpeg'
+        
+        files = {
+            'file': (
+                os.path.basename(file_paths[0]), 
+                open(file_paths[0], 'rb'),
+                mime_type
+            )
+        }
 
     try:
         # Send the POST request to the FastAPI endpoint
@@ -22,7 +51,21 @@ def echo(message, history):
             response_json = response.json()
             print(response_json)
             if "response" in response_json:
-                return response_json["response"]
+                if response_json["response"] == "This command is for local browsing":
+                    # Make the secondary call based on the received command
+                    command = response_json["command"]
+                    try:
+                        secondary_response = multion.browse(
+                            cmd=command["cmd"],
+                            url=command["url"],
+                            local=True
+                        )
+                        return secondary_response.message
+                    except Exception as e:
+                        print(f"Error in secondary call: {e}")
+                        return {"error": str(e)}
+                else:
+                    return response_json["response"]
             else:
                 return {"error": "Invalid response format from FastAPI endpoint"}
         else:

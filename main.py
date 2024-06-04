@@ -1,3 +1,9 @@
+import io
+import os
+import multion
+import torch
+import instructor
+
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -5,12 +11,6 @@ from PIL import Image
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 from rich import print
-
-import io
-import os
-import multion
-import torch
-import instructor
 from multion.client import MultiOn
 from dotenv import load_dotenv
 
@@ -111,9 +111,9 @@ async def process_input(text: str = Form(...), file: UploadFile = File(None), on
     command = await generate_command(processed_text)
     print(f"Command generated: {command}")
 
-    if not online and not command.local:
+    if online and command.local:
         try:
-            print("Calling MultiOn API with online=True")
+            print(f"Calling MultiOn API with online={online} and local={command.local}")
             response = multion.browse(
                 cmd=command.cmd,
                 url=command.url,
