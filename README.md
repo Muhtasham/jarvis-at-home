@@ -13,6 +13,6 @@ SOTA open VLM is [InternVL-1.5](https://huggingface.co/spaces/opencompass/open_v
 
 ToDo:
 - [ ] Add info about PaliGemma
-- [ ] Add docstrings to the code
+- [X] Add docstrings to the code
 - [ ] Add a demo video
 - [ ] Add retry mechanisms
