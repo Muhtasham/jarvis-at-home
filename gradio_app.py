@@ -4,7 +4,7 @@ import requests
 import time
 import os 
 
-from rich import print
+from loguru import logger
 from multion.client import MultiOn
 from dotenv import load_dotenv
 from typing import Dict, Any
@@ -13,7 +13,7 @@ from typing import Dict, Any
 load_dotenv()
 
 multion = MultiOn(api_key=os.environ.get("MULTION_API_KEY"))
-print("MultiOn API key loaded")
+logger.info("MultiOn API key loaded")
 
 def post_with_retry(url: str, data: Dict[str, Any], files: Dict[str, Any], max_retries: int = 3, delay: int = 2) -> requests.Response:
     """
@@ -39,7 +39,7 @@ def post_with_retry(url: str, data: Dict[str, Any], files: Dict[str, Any], max_r
             response.raise_for_status()  # Raise an error for bad status codes
             return response
         except requests.exceptions.RequestException as e:
-            print(f"Attempt {retries + 1} failed: {e}")
+            logger.info(f"Attempt {retries + 1} failed: {e}")
             retries += 1
             time.sleep(delay)
     raise Exception(f"Failed after {max_retries} attempts")
@@ -48,8 +48,8 @@ def echo(message, history):
     file_paths = message.get("files", [])
     text = message.get("text", "")
     
-    print(f"Received message: {text}")
-    print(f"Received files: {file_paths}")
+    logger.info(f"Received message: {text}")
+    logger.info(f"Received files: {file_paths}")
     
     # Prepare the data for the POST request
     data = {'text': text, 'online': 'true'}  # Ensure 'online' is sent as a string
@@ -79,19 +79,23 @@ def echo(message, history):
         # Handle the response from the FastAPI endpoint
         if response.status_code == 200:
             response_json = response.json()
-            print(response_json)
+            logger.info(response_json)
             if "response" in response_json:
                 if response_json["response"] == "This command is for local browsing":
                     # Make the secondary call based on the received command
                     command = response_json["command"]
                     try:
+                        logger.info(f"Calling MultiOn API locally with command: {command}")
                         response = multion.sessions.create(
                         url=command["url"],
                         local=True
                         )
                         session_id = response.session_id
-                        print(response.message)
+                        logger.info(f"Session created: {session_id}")
 
+                        logger.info(response.message)
+
+                        logger.info("Stepping through the session")
                         while response.status == 'CONTINUE':
                             response = multion.sessions.step(
                                 session_id = session_id,
@@ -99,16 +103,16 @@ def echo(message, history):
                                 url=command["url"],
                             )
                             user_facing_response = response.message
-                            print(user_facing_response)
-                            
-
+                            logger.info(user_facing_response)
+                        
+                        logger.info("Closing the session")
                         response = multion.sessions.close(session_id=session_id)
-                        print("close_session_response: ", response)
+                        logger.info("Close_session_response: ", response)
 
                         return user_facing_response
                     
                     except Exception as e:
-                        print(f"Error in secondary call: {e}")
+                        logger.info(f"Error in secondary call: {e}")
                         return {"error": str(e)}
                 else:
                     return response_json["response"]
@@ -117,7 +121,7 @@ def echo(message, history):
         else:
             return {"error": "Failed to process input"}
     except Exception as e:
-        print(f"Error: {e}")
+        logger.info(f"Error: {e}")
         return {"error": str(e)}
 
 demo = gr.ChatInterface(

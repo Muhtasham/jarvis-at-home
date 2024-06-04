@@ -8,3 +8,4 @@ multion
 gradio
 instructor
 python-dotenv
+loguru
