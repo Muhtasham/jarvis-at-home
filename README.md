@@ -61,4 +61,4 @@ The UI will be available at http://localhost:7860 in your browser.
 Future directions would be to use proper inference server to have high througput, and also consider fully on device deployment for privacy.
 
 ### What did not work
-The langchain integration seems to be broken, due to sdk updates, and the documentation is not clear on how to use it. I documented the issue under `notebooks/multion_langchain.ipynb` for future reference.
+The langchain integration seems to be broken, due to sdk updates, and the documentation is not clear on how to use it. I documented the issue under `notebooks/multion_langchain.ipynb` for future reference. Also Multion Create Session api for German Uber eats and LinkedIn did not work.
