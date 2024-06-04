@@ -1,10 +1,10 @@
 fastapi
 openai
 transformers
+torch
 torchvision
 einops
 multion
 gradio
 instructor
-requests
 python-dotenv
