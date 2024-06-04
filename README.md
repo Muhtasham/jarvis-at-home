@@ -17,14 +17,14 @@ For the best openVLM model regardless of size, `MiniCPM-Llama3-V-2_5` is the bes
 
 ## Deployment
 
-I chose to deploy on huggingface spaces T4 GPU to convenience, but one could also use serverless gpus, or the endpoints offered by fal.ai, for example my sample request took 0.50 seconds and will cost `~$ 0.00029`. For $1 I could run this model with the same options approximately [`3507 times`](https://fal.ai/models/fal-ai/moondream/batched/playground)
+I chose to deploy on [huggingface spaces](https://huggingface.co/spaces/muhtasham/agent) T4 GPU to convenience, but one could also use serverless gpus like ones from modal labs, or the endpoints offered by fal.ai, for example my sample request took 0.50 seconds and will cost `~$ 0.00029`. For $1 I could run this model with the same options approximately [`3507 times`](https://fal.ai/models/fal-ai/moondream/batched/playground)
 
 ## Flow of the App
 
 1. **Image Input**: Provide an image to the system, along with optional text.
 2. **Visual Language Model (VLM)**: Process the image using the VLM.
 3. **Command Generation**: 
-   - Generate a command via function calling.
+   - Generate a command via function calling, with pydantic models. 
    - Option to enable local browsing or online browsing directly at the FastAPI endpoint.
 4. **Send Command**: Send the generated command to the MultiOn API.
 5. **Action Execution**: Perform the required actions based on the command.
