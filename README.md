@@ -20,6 +20,7 @@ For the best openVLM model regardless of size, `MiniCPM-Llama3-V-2_5` is the bes
 
 I chose to deploy on huggingface spaces T4 GPU to convenience, but one could also use serverless gpus, or the endpoints offered by fal.ai, for example my sample request took 0.50 seconds and will cost `~$ 0.00029`. For $1 I could run this model with the same options approximately [`3507 times`](https://fal.ai/models/fal-ai/moondream/batched/playground)
 
+Future directions would be to use proper inference server to have high througput, and also consider fully on device deployment for privacy.
 
 ToDo:
 - [ ] Add a demo video
