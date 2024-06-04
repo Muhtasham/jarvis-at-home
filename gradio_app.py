@@ -1,11 +1,13 @@
 import multion
 import gradio as gr
 import requests
+import time
 import os 
 
 from rich import print
 from multion.client import MultiOn
 from dotenv import load_dotenv
+from typing import Dict, Any
 
 # Load environment variables from .env file
 load_dotenv()
@@ -13,6 +15,34 @@ load_dotenv()
 multion = MultiOn(api_key=os.environ.get("MULTION_API_KEY"))
 print("MultiOn API key loaded")
 
+def post_with_retry(url: str, data: Dict[str, Any], files: Dict[str, Any], max_retries: int = 3, delay: int = 2) -> requests.Response:
+    """
+    Send a POST request to the specified URL with retries on failure.
+
+    Parameters:
+    - url (str): The URL to send the POST request to.
+    - data (dict): The data to include in the POST request.
+    - files (dict): The files to include in the POST request.
+    - max_retries (int, optional): The maximum number of retries. Default is 3.
+    - delay (int, optional): The delay in seconds between retries. Default is 2.
+
+    Returns:
+    - response (requests.Response): The response object from the successful POST request.
+
+    Raises:
+    - Exception: If all retries fail, an exception is raised indicating the failure.
+    """
+    retries = 0
+    while retries < max_retries:
+        try:
+            response = requests.post(url, data=data, files=files)
+            response.raise_for_status()  # Raise an error for bad status codes
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"Attempt {retries + 1} failed: {e}")
+            retries += 1
+            time.sleep(delay)
+    raise Exception(f"Failed after {max_retries} attempts")
 
 def echo(message, history):
     file_paths = message.get("files", [])
@@ -44,7 +74,7 @@ def echo(message, history):
 
     try:
         # Send the POST request to the FastAPI endpoint
-        response = requests.post("https://muhtasham-agent.hf.space/process-input/", data=data, files=files)
+        response = post_with_retry("https://muhtasham-agent.hf.space/process-input/", data=data, files=files)
 
         # Handle the response from the FastAPI endpoint
         if response.status_code == 200:
@@ -92,8 +122,8 @@ def echo(message, history):
 
 demo = gr.ChatInterface(
     fn=echo,
-    examples=[{"text": "hello"}, {"text": "hola"}, {"text": "merhaba"}],
     title="MultiOn Bot",
-    multimodal=True,
+    multimodal=True
 )
+
 demo.launch()
