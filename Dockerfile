@@ -3,14 +3,20 @@
 
 FROM tiangolo/uvicorn-gunicorn:python3.10-slim
 
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Set the working directory to /app
+# Set the working directory
 WORKDIR /app
 
+# Copy the contents of the current directory to /app in the container
+COPY . .
+
+# List the contents of the working directory to debug
+RUN ls -la
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
+
 # Install requirements.txt 
-RUN pip install --no-cache-dir --upgrade -r /requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Expose the port the app runs on
 EXPOSE 7860
