@@ -31,6 +31,27 @@ I chose to deploy on [huggingface spaces](https://huggingface.co/spaces/muhtasha
 6. **Task Verification**: Verify that the task is completed successfully.
 7. **Response**: Return the response.
 
+## Setup
+
+Create a virtual environment and install the dependencies:
+
+```bash
+conda create -n jarvis python=3.10
+conda activate jarvis
+pip install -r requirements.txt
+```
+
+Set the `MULTION_API_KEY` and `OPENAI_API_KEY` environment variable in .env file.
+
+## Run
+
+Run the UI with:
+
+```bash
+python gradio_app.py
+```
+
+The UI will be available at http://localhost:7860 in your browser.
 
 ## Future directions
 
