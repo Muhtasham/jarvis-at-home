@@ -17,7 +17,10 @@ For the best openVLM model regardless of size, `MiniCPM-Llama3-V-2_5` is the bes
 
 ## Deployment
 
-I chose to deploy on [huggingface spaces](https://huggingface.co/spaces/muhtasham/agent) T4 GPU to convenience, but one could also use serverless gpus like ones from modal labs, or the endpoints offered by fal.ai, for example my sample request took 0.50 seconds and will cost `~$ 0.00029`. For $1 I could run this model with the same options approximately [`3507 times`](https://fal.ai/models/fal-ai/moondream/batched/playground)
+I chose to deploy on [huggingface spaces](https://huggingface.co/spaces/muhtasham/agent) T4 GPU to convenience, 
+Notice that the endpoint will shut down after 15 minutes of inactivity, so you will need to refresh the page to keep the [endpoint](https://huggingface.co/spaces/muhtasham/agent) alive.
+
+One could also use serverless gpus like ones from modal labs, or the endpoints offered by fal.ai, for example my sample request took 0.50 seconds and will cost `~$ 0.00029`. For $1 I could run this model with the same options approximately [`3507 times`](https://fal.ai/models/fal-ai/moondream/batched/playground)
 
 ## Flow of the App
 
