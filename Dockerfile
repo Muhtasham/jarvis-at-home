@@ -1,3 +1,6 @@
+# read the doc: https://huggingface.co/docs/hub/spaces-sdks-docker
+# you will also find guides on how best to write your Dockerfile
+
 FROM tiangolo/uvicorn-gunicorn:python3.10-slim
 
 # Copy the current directory contents into the container at /app
