@@ -4,7 +4,25 @@
 > We have Jarvis at home.  
 > Jarvis at home:
 
-## Architecture
+## Introduction
+
+Jarvis is a virtual assistant that can help you with your daily tasks, navigate your browser, and perform various actions on the web on your behalf.
+
+For example you can send email to your friend, or schedule a meeting with your colleagues, based on screenshot of the text.
+
+## Flow of the App
+
+1. **Image Input**: Provide an image to the system, along with optional text.
+2. **Visual Language Model (VLM)**: Process the image using the VLM.
+3. **Command Generation**: 
+   - Generate a command via function calling, with pydantic models. 
+   - Option to enable local browsing or online browsing directly at the FastAPI endpoint.
+4. **Send Command**: Send the generated command to the MultiOn API.
+5. **Action Execution**: Perform the required actions based on the command.
+6. **Task Verification**: Verify that the task is completed successfully.
+7. **Response**: Return the response.
+
+## VLM Architecture
 
 SOTA open VLM is [InternVL-1.5](https://huggingface.co/spaces/opencompass/open_vlm_leaderboard), which is *22B*, for practical deployment and being GPU poor and considering fast inference for small batch sizes, I choose `moondream2` which is a model can answer real-world questions about images. 
 
@@ -22,17 +40,6 @@ Notice that the endpoint will shut down after 15 minutes of inactivity, so you w
 
 One could also use serverless gpus like ones from modal labs, or the endpoints offered by fal.ai, for example my sample request took 0.50 seconds and will cost `~$ 0.00029`. For $1 I could run this model with the same options approximately [`3507 times`](https://fal.ai/models/fal-ai/moondream/batched/playground)
 
-## Flow of the App
-
-1. **Image Input**: Provide an image to the system, along with optional text.
-2. **Visual Language Model (VLM)**: Process the image using the VLM.
-3. **Command Generation**: 
-   - Generate a command via function calling, with pydantic models. 
-   - Option to enable local browsing or online browsing directly at the FastAPI endpoint.
-4. **Send Command**: Send the generated command to the MultiOn API.
-5. **Action Execution**: Perform the required actions based on the command.
-6. **Task Verification**: Verify that the task is completed successfully.
-7. **Response**: Return the response.
 
 ## Setup
 
@@ -58,7 +65,4 @@ The UI will be available at http://localhost:7860 in your browser.
 
 ## Future directions
 
-Future directions would be to use proper inference server to have high througput, and also consider fully on device deployment for privacy.
-
-### What did not work
-The langchain integration seems to be broken, due to sdk updates, and the documentation is not clear on how to use it. I documented the issue under `notebooks/multion_langchain.ipynb` for future reference. Also Multion Create Session api for German Uber eats and LinkedIn did not work.
+Future directions would be to use proper inference server to have high througput, and also consider fully on device deployment for privacy. Also fine-tuning llama3-8b on this conversational web navigation [dataset](https://huggingface.co/datasets/McGill-NLP/WebLINX) is a good idea.

@@ -85,7 +85,7 @@ def echo(message, history):
                     # Make the secondary call based on the received command
                     command = response_json["command"]
                     try:
-                        logger.info(f"Calling MultiOn API locally with command: {command}")
+                        logger.info(f"Calling MultiOn API locally in Step mode: {command}")
                         response = multion.sessions.create(
                         url=command["url"],
                         local=True
@@ -97,6 +97,7 @@ def echo(message, history):
                         logger.info(f"Status so far: {response.status}")
 
                         logger.info("Stepping through the session")
+                        
                         while response.status == 'CONTINUE':
                             response = multion.sessions.step(
                                 session_id = session_id,
@@ -114,8 +115,18 @@ def echo(message, history):
                         return user_facing_response
                     
                     except Exception as e:
-                        logger.info(f"Error in secondary call: {e}")
-                        return {"error": str(e)}
+                        logger.info(f"Error in session call: {e}")
+                        try:
+                            logger.info(f"Calling MultiOn API locally in Browse mode: {command}")
+                            response = multion.browse(
+                            cmd=command["cmd"],
+                            url=command["url"],
+                            local=True
+                            )
+                            return response
+                        except Exception as e:
+                            logger.info(f"Error in browse call: {e}")
+                            return {"error": str(e)}
                 else:
                     return response_json["response"]
             else:
