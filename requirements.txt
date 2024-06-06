@@ -36,8 +36,8 @@ filelock=3.14.0=pypi_0
 fonttools=4.53.0=pypi_0
 frozenlist=1.4.1=pypi_0
 fsspec=2024.5.0=pypi_0
-gradio=4.32.2=pypi_0
-gradio-client=0.17.0=pypi_0
+gradio=4.36.0=pypi_0
+gradio-client=1.0.1=pypi_0
 h11=0.14.0=pypi_0
 httpcore=1.0.5=pypi_0
 httptools=0.6.1=pypi_0
