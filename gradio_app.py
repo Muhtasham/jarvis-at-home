@@ -35,7 +35,7 @@ def post_with_retry(url: str, data: Dict[str, Any], files: Dict[str, Any], max_r
     retries = 0
     while retries < max_retries:
         try:
-            response = requests.post(url, data=data, files=files)
+            response = requests.post(url, data=data, files=files, online=False)
             response.raise_for_status()  # Raise an error for bad status codes
             return response
         except requests.exceptions.RequestException as e:
